@@ -4,7 +4,7 @@ require 'zip/zip'
 
 hash = {}
 
-Dir.glob("**/*", File::FNM_DOTMATCH).each do |filename|
+Dir.glob("**_comics/*", File::FNM_DOTMATCH).each do |filename|
   next if File.directory?(filename)
   # puts 'Checking ' + filename
 
@@ -28,9 +28,19 @@ hash.each_value do |filename_array|
   end
 end
 
-Dir.glob("**/*").each do |filename|
+Dir.glob("**_comics/*").each do |filename|
   if File.directory?(filename)
-    Zip::ZipFile.open(filename+".cbz", 'w') do |zipfile|
+    original_filename = filename.split("_comics/").last
+    chapter_parts = filename.split("chapter_")
+    chapter_int = chapter_parts.last.to_i
+    chapter_int_string = chapter_int < 10 ? "0" + chapter_int.to_s : chapter_int.to_s
+
+    reassembled_filename = chapter_parts.first.split("_comics/").last + "chapter_"+ chapter_int_string
+
+    if File.exists?("saved_comics/#{original_filename}.cbz")
+      FileUtils.rm("saved_comics/#{original_filename}.cbz")
+    end
+    Zip::ZipFile.open("saved_comics/" + reassembled_filename + ".cbz", 'w') do |zipfile|
       Dir["#{filename}/**/**"].reject{|f|f==filename}.each do |file|
         zipfile.add(file.sub(filename+'/',''),file)
       end
